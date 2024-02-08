@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    environment {
+        MAVEN_HOME = tool 'My_Maven'
+        // Replace 'YourMavenToolName' with the name of the Maven tool installed in Jenkins
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                script {
+                    sh "${MAVEN_HOME}/bin/mvn clean install" // Maven build command
+                }
+            }
+        }
+
+        stage('Deploy to Tomcat') {
+            steps {
+                script {
+                    def tomcatCredentials = '90927b6b-514b-4644-8ad0-9e40d9533462'
+                    def tomcatUrl = 'http://54.158.155.78:8081/'
+
+                    def warFile = findFiles(glob: '**/*.war')[0]
+
+                    def deployCommand = "curl -v -u ${tomcatCredentials} --upload-file ${warFile} ${tomcatUrl}/manager/text/deploy?path=/"
+
+                    sh deployCommand
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs() // Clean workspace after the build
+        }
+    }
+}
+
